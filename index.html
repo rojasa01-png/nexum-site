@@ -1,0 +1,1916 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Nexum Logistics — Orquestación Estratégica</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+/* ─── RESET & BASE ─── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: #080808;
+  color: #f0f0ec;
+  font-family: 'DM Sans', sans-serif;
+  overflow-x: hidden;
+  cursor: none;
+}
+::-webkit-scrollbar { width: 2px; }
+::-webkit-scrollbar-track { background: #080808; }
+::-webkit-scrollbar-thumb { background: #ccff00; }
+
+/* ─── CUSTOM CURSOR ─── */
+#cursor {
+  position: fixed;
+  width: 8px; height: 8px;
+  background: #ccff00;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9999;
+  transform: translate(-50%,-50%);
+  transition: width .15s, height .15s, background .15s;
+}
+#cursor-ring {
+  position: fixed;
+  width: 32px; height: 32px;
+  border: 1px solid rgba(204,255,0,.4);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9998;
+  transform: translate(-50%,-50%);
+  transition: transform .08s ease, width .2s, height .2s, opacity .2s;
+}
+body:has(a:hover) #cursor, body:has(button:hover) #cursor { width: 14px; height: 14px; background: #fff; }
+
+/* ─── JOURNEY PROGRESS ─── */
+#journey-line {
+  position: fixed;
+  left: 2.2rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .5rem;
+  z-index: 50;
+}
+.j-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  border: 1px solid rgba(204,255,0,.3);
+  transition: background .4s, border-color .4s, transform .4s;
+  cursor: pointer;
+}
+.j-dot.active {
+  background: #ccff00;
+  border-color: #ccff00;
+  transform: scale(1.4);
+}
+.j-connector {
+  width: 1px; height: 28px;
+  background: rgba(204,255,0,.12);
+}
+
+/* ─── NAV ─── */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1.2rem 5%;
+  background: rgba(8,8,8,.85);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  transition: background .3s;
+}
+.logo {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800; font-size: 1rem;
+  letter-spacing: .14em; text-transform: uppercase;
+  color: #f0f0ec; text-decoration: none;
+  display: flex; align-items: center; gap: .6rem;
+}
+.logo-pulse {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #ccff00;
+  box-shadow: 0 0 8px rgba(204,255,0,.6);
+  animation: logoPulse 2s ease-in-out infinite;
+}
+@keyframes logoPulse {
+  0%,100% { box-shadow: 0 0 4px rgba(204,255,0,.4); }
+  50%      { box-shadow: 0 0 16px rgba(204,255,0,.9); }
+}
+.nav-links { display: flex; gap: 2.2rem; list-style: none; }
+.nav-links a { font-size: .75rem; letter-spacing: .07em; color: #555; text-decoration: none; transition: color .2s; }
+.nav-links a:hover { color: #f0f0ec; }
+.nav-cta {
+  background: #ccff00; color: #080808;
+  font-family: 'Syne', sans-serif; font-weight: 700;
+  font-size: .73rem; letter-spacing: .1em; text-transform: uppercase;
+  padding: .55rem 1.4rem; border-radius: 2px; text-decoration: none;
+  transition: background .2s, box-shadow .2s;
+  box-shadow: 0 0 20px rgba(204,255,0,.2);
+}
+.nav-cta:hover { background: #d9ff1a; box-shadow: 0 0 30px rgba(204,255,0,.4); }
+
+/* ─── HERO ─── */
+#hero {
+  position: relative;
+  height: 100vh;
+  display: flex; flex-direction: column; justify-content: flex-start;
+  padding: 13rem 5% 5.5rem;
+  overflow-x: hidden;
+  overflow-y: visible;
+}
+
+/* Particle layers */
+.p-layer {
+  position: absolute; inset: 0;
+  pointer-events: none;
+  will-change: transform;
+}
+.particle {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(204,255,0,.55);
+}
+
+/* Perspective grid */
+.h-grid {
+  position: absolute;
+  bottom: 0; left: -20%; right: -20%; height: 65%;
+  background-image:
+    linear-gradient(rgba(204,255,0,.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(204,255,0,.06) 1px, transparent 1px);
+  background-size: 70px 70px;
+  transform: perspective(460px) rotateX(56deg);
+  transform-origin: 50% 100%;
+  -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,.55) 0%, transparent 70%);
+  mask-image: linear-gradient(to top, rgba(0,0,0,.55) 0%, transparent 70%);
+  pointer-events: none;
+  will-change: transform;
+}
+.h-glow {
+  position: absolute;
+  bottom: 26%; left: 50%; transform: translateX(-50%);
+  width: 100%; height: 340px;
+  background: radial-gradient(ellipse 65% 50% at 50% 100%,
+    rgba(165,70,5,.18) 0%, rgba(110,35,0,.07) 55%, transparent 100%);
+  pointer-events: none;
+}
+.h-top {
+  position: absolute; top: 0; left: 0; right: 0; height: 200px;
+  background: linear-gradient(#080808, transparent);
+  pointer-events: none; z-index: 1;
+}
+
+/* Wireframe Truck */
+.truck-layer {
+  position: absolute;
+  bottom: 18%; left: 0; right: 0;
+  z-index: 2; pointer-events: none;
+  will-change: transform;
+}
+.truck-svg { width: 100%; max-height: 185px; opacity: .5; }
+.scan-beam {
+  position: absolute;
+  bottom: 18%; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent 5%, rgba(204,255,0,.5) 50%, transparent 95%);
+  pointer-events: none; z-index: 3;
+  animation: beamScan 4s ease-in-out infinite;
+}
+@keyframes beamScan {
+  0%,100% { bottom: calc(18% - 50px); opacity: 0; }
+  50%      { bottom: calc(18% + 55px); opacity: 1; }
+}
+
+/* Hero text */
+.hero-content { position: relative; z-index: 4; max-width: 1100px; }
+.h-eye {
+  font-size: .67rem; font-weight: 500; letter-spacing: .22em;
+  text-transform: uppercase; color: #ccff00;
+  margin-bottom: 1.8rem; display: flex; align-items: center; gap: .75rem;
+  opacity: 0; animation: fadeUp .6s .3s forwards;
+}
+.h-eye::before { content: ''; width: 22px; height: 1px; background: #ccff00; }
+.h1 {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(3rem, 6.2vw, 7.8rem);
+  font-weight: 800; line-height: .92;
+  letter-spacing: -.02em; text-transform: uppercase;
+  margin-bottom: 2.8rem;
+  overflow: visible;
+}
+.h1 .w {
+  display: inline-block;
+  opacity: 0; transform: translateY(36px);
+  animation: fadeUp .7s forwards;
+}
+.h1 .w:nth-child(1){animation-delay:.5s}
+.h1 .w:nth-child(2){animation-delay:.65s}
+.h1 .w:nth-child(3){animation-delay:.8s;color:#ccff00}
+.h1 .w:nth-child(4){animation-delay:.95s;color:#ccff00}
+.h-bottom {
+  display: flex; align-items: flex-end;
+  justify-content: space-between; flex-wrap: wrap; gap: 2rem;
+}
+.h-sub {
+  font-size: .98rem; color: #555; max-width: 380px; line-height: 1.75;
+  opacity: 0; animation: fadeUp .7s 1.15s forwards;
+}
+.h-actions {
+  display: flex; gap: .8rem;
+  opacity: 0; animation: fadeUp .7s 1.35s forwards;
+}
+.btn-lime {
+  background: #ccff00; color: #080808;
+  font-family: 'Syne', sans-serif; font-weight: 700;
+  font-size: .8rem; letter-spacing: .1em; text-transform: uppercase;
+  padding: .95rem 2rem; border-radius: 2px; text-decoration: none;
+  transition: background .2s, transform .2s, box-shadow .2s;
+  box-shadow: 0 0 24px rgba(204,255,0,.3);
+}
+.btn-lime:hover { background: #d9ff1a; transform: translateY(-2px); box-shadow: 0 0 40px rgba(204,255,0,.5); }
+.btn-ghost {
+  border: 1px solid rgba(255,255,255,.1); color: #888;
+  font-size: .8rem; letter-spacing: .06em;
+  padding: .95rem 2rem; border-radius: 2px; text-decoration: none;
+  transition: border-color .2s, color .2s, transform .2s;
+}
+.btn-ghost:hover { border-color: rgba(255,255,255,.3); color: #f0f0ec; transform: translateY(-2px); }
+.h-scroll {
+  position: absolute; right: 5%; bottom: 3rem; z-index: 4;
+  writing-mode: vertical-rl; font-size: .6rem; letter-spacing: .2em;
+  text-transform: uppercase; color: #444;
+  display: flex; align-items: center; gap: .7rem;
+  opacity: 0; animation: fadeUp .7s 1.6s forwards;
+}
+.h-scroll::after {
+  content: ''; width: 1px; height: 36px;
+  background: linear-gradient(#444, #ccff00);
+  animation: scrollPulse 2s 2s ease-in-out infinite;
+}
+@keyframes scrollPulse { 0%,100% { opacity: .3; height: 22px; } 50% { opacity: 1; height: 40px; } }
+
+/* ─── STATS ─── */
+.stats {
+  display: grid; grid-template-columns: repeat(4,1fr);
+  border-top: 1px solid rgba(255,255,255,.07);
+  border-bottom: 1px solid rgba(255,255,255,.07);
+}
+.stat {
+  padding: 2.4rem 5%; border-right: 1px solid rgba(255,255,255,.07);
+  transition: background .3s; cursor: default; position: relative; overflow: hidden;
+}
+.stat:last-child { border-right: none; }
+.stat::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: #ccff00; transform: scaleX(0); transform-origin: left;
+  transition: transform .5s ease;
+}
+.stat.on::before { transform: scaleX(1); }
+.stat-n { font-family: 'Syne', sans-serif; font-size: 2.7rem; font-weight: 800; line-height: 1; margin-bottom: .35rem; }
+.stat-n span { color: #ccff00; }
+.stat-l { font-size: .76rem; color: #555; letter-spacing: .05em; line-height: 1.45; }
+
+/* ─── SECTION SHARED ─── */
+.s-tag {
+  font-size: .67rem; font-weight: 500; letter-spacing: .22em;
+  text-transform: uppercase; color: #555;
+  margin-bottom: 1.1rem; display: flex; align-items: center; gap: .65rem;
+}
+.s-tag::before { content: ''; width: 16px; height: 1px; background: currentColor; flex-shrink: 0; }
+h2.disp {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(2.6rem, 4.8vw, 5rem);
+  font-weight: 800; line-height: .95;
+  letter-spacing: -.02em; text-transform: uppercase;
+  margin-bottom: 1.8rem;
+}
+h2.disp .lime { color: #ccff00; }
+.body-p { font-size: .97rem; color: #666; line-height: 1.75; max-width: 460px; margin-bottom: 2rem; }
+
+/* ─── PROBLEM SECTION (light) ─── */
+#problem {
+  background: #f2f2ee;
+  padding: 8rem 5%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6rem;
+  align-items: center;
+  border-bottom: 1px solid rgba(0,0,0,.07);
+}
+#problem .s-tag { color: rgba(8,8,8,.35); }
+#problem h2.disp { color: #080808; }
+#problem h2.disp .lime { color: #080808; border-bottom: 3px solid #ccff00; padding-bottom: 2px; }
+#problem .body-p { color: rgba(8,8,8,.55); }
+.chaos-visual { position: relative; aspect-ratio: 1; max-width: 460px; }
+.chaos-svg { width: 100%; height: 100%; }
+
+/* ─── SCROLLYTELLING SECTION ─── */
+#nexum-scroll {
+  position: relative;
+  height: 380vh;
+}
+.scrolly-sticky {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  overflow: hidden;
+  background: #080808;
+}
+
+/* Left: text panels */
+.scrolly-text-col {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 6rem 5% 6rem 7%;
+  border-right: 1px solid rgba(255,255,255,.07);
+  position: relative;
+}
+.scrolly-panel {
+  position: absolute;
+  inset: 0;
+  padding: 6rem 5% 6rem 7%;
+  display: flex; flex-direction: column; justify-content: center;
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity .6s ease, transform .6s ease;
+  pointer-events: none;
+}
+.scrolly-panel.visible {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+
+/* Right: orbit visual */
+.scrolly-orbit-col {
+  position: relative;
+  display: flex; align-items: center; justify-content: center;
+  background: #080808;
+  overflow: hidden;
+}
+.orbit-bg-grid {
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.04) 1px, transparent 1px);
+  background-size: 50px 50px;
+  will-change: transform;
+}
+.orbit-container {
+  position: relative;
+  width: min(460px, 80%);
+  aspect-ratio: 1;
+  will-change: transform;
+}
+
+/* Center node */
+.orbit-center {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 110px; height: 110px;
+  border-radius: 50%;
+  background: rgba(204,255,0,.1);
+  border: 1.5px solid #ccff00;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  z-index: 10;
+}
+.orbit-center-inner {
+  width: 75px; height: 75px;
+  border-radius: 50%;
+  background: rgba(204,255,0,.2);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+}
+.orbit-center-label {
+  font-family: 'Syne', sans-serif;
+  font-size: 10px; font-weight: 800;
+  letter-spacing: 2px; color: #ccff00;
+  line-height: 1;
+}
+.orbit-center-sub {
+  font-size: 7px; letter-spacing: 1.5px;
+  color: rgba(204,255,0,.5); margin-top: 3px;
+  font-family: 'DM Sans', sans-serif;
+}
+
+/* Orbit rings */
+.orbit-ring {
+  position: absolute;
+  top: 50%; left: 50%;
+  border-radius: 50%;
+  border: 1px dashed rgba(204,255,0,.15);
+  transform: translate(-50%, -50%);
+  will-change: transform;
+}
+.orbit-ring-1 { width: 220px; height: 220px; }
+.orbit-ring-2 { width: 360px; height: 360px; }
+
+/* Orbit nodes */
+.orbit-node {
+  position: absolute;
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  background: rgba(8,8,8,.95);
+  border: 1px solid rgba(204,255,0,.25);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  transform: translate(-50%, -50%) scale(.6);
+  opacity: 0;
+  transition: opacity .5s ease, transform .5s ease, border-color .4s;
+  z-index: 5;
+}
+.orbit-node.active {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+.orbit-node.active:hover {
+  border-color: #ccff00;
+  background: rgba(204,255,0,.08);
+}
+.orbit-node-label {
+  position: absolute;
+  font-size: 7.5px; letter-spacing: 1.3px;
+  text-transform: uppercase; color: rgba(204,255,0,.45);
+  font-family: 'DM Sans', sans-serif; white-space: nowrap;
+}
+/* label positions based on orbit angle */
+.orbit-node[data-pos="top"]    .orbit-node-label { bottom: -18px; left: 50%; transform: translateX(-50%); }
+.orbit-node[data-pos="tr"]     .orbit-node-label { bottom: -18px; left: 50%; transform: translateX(-50%); }
+.orbit-node[data-pos="br"]     .orbit-node-label { top: -18px; left: 50%; transform: translateX(-50%); }
+.orbit-node[data-pos="bottom"] .orbit-node-label { top: -18px; left: 50%; transform: translateX(-50%); }
+.orbit-node[data-pos="bl"]     .orbit-node-label { top: -18px; left: 50%; transform: translateX(-50%); }
+.orbit-node[data-pos="tl"]     .orbit-node-label { bottom: -18px; left: 50%; transform: translateX(-50%); }
+
+/* Connector lines */
+.orbit-connector {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 0; height: 1px;
+  background: linear-gradient(90deg, rgba(204,255,0,.6), rgba(204,255,0,.1));
+  transform-origin: 0 50%;
+  opacity: 0;
+  transition: opacity .4s, width .6s ease;
+}
+.orbit-connector.active { opacity: 1; }
+
+/* Pulse rings on center */
+.orbit-pulse {
+  position: absolute;
+  top: 50%; left: 50%;
+  border-radius: 50%;
+  border: 1px solid rgba(204,255,0,.2);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+.orbit-pulse-1 { width: 120px; height: 120px; animation: orbPulse 3s ease-out infinite; }
+.orbit-pulse-2 { width: 120px; height: 120px; animation: orbPulse 3s 1.5s ease-out infinite; }
+@keyframes orbPulse {
+  0%   { width: 110px; height: 110px; opacity: .5; }
+  100% { width: 200px; height: 200px; opacity: 0; }
+}
+
+/* ─── ANIMATED ICONS ─── */
+.anim-icon { width: 28px; height: 28px; overflow: visible; }
+
+/* ─── HOW IT WORKS (Journey Path) ─── */
+#como {
+  background: #0d0d0d;
+  padding: 8rem 5%;
+  border-top: 1px solid rgba(255,255,255,.07);
+  border-bottom: 1px solid rgba(255,255,255,.07);
+  position: relative;
+  overflow: hidden;
+}
+.como-road {
+  position: absolute;
+  top: 0; bottom: 0; left: 50%;
+  transform: translateX(-50%);
+  width: 1px;
+  background: linear-gradient(to bottom, transparent, rgba(204,255,0,.15) 20%, rgba(204,255,0,.15) 80%, transparent);
+}
+.como-head {
+  display: flex; justify-content: space-between;
+  align-items: flex-end; margin-bottom: 5.5rem;
+  flex-wrap: wrap; gap: 2rem;
+  position: relative;
+}
+.journey-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 5rem;
+  position: relative;
+}
+.j-step {
+  display: grid;
+  grid-template-columns: 1fr 60px 1fr;
+  align-items: center;
+  gap: 2rem;
+  position: relative;
+}
+.j-step-left  { grid-column: 1; text-align: right; padding-right: 2rem; }
+.j-step-mid   { grid-column: 2; }
+.j-step-right { grid-column: 3; padding-left: 2rem; }
+
+/* Even steps: content is in j-step-right (col 3), empty in j-step-left (col 1) — no reorder needed */
+.j-step:nth-child(even) .j-step-left  { grid-column: 1; text-align: left; padding-right: 0; padding-left: 2rem; }
+.j-step:nth-child(even) .j-step-mid   { grid-column: 2; }
+.j-step:nth-child(even) .j-step-right { grid-column: 3; text-align: right; padding-left: 0; padding-right: 2rem; }
+
+.j-step-mid {
+  display: flex; flex-direction: column; align-items: center;
+  position: relative; z-index: 2;
+}
+.j-step-num {
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  border: 1px solid rgba(204,255,0,.3);
+  background: #0d0d0d;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Syne', sans-serif;
+  font-size: .72rem; font-weight: 800;
+  letter-spacing: .1em; color: #ccff00;
+  transition: background .3s, border-color .3s, box-shadow .3s;
+  box-shadow: 0 0 0 4px #0d0d0d;
+}
+.j-step.on .j-step-num {
+  background: rgba(204,255,0,.1);
+  border-color: #ccff00;
+  box-shadow: 0 0 0 4px #0d0d0d, 0 0 20px rgba(204,255,0,.25);
+}
+.j-step-content { opacity: 0; transform: translateY(20px); transition: opacity .6s, transform .6s; }
+.j-step.on .j-step-content { opacity: 1; transform: none; }
+.j-step h4 {
+  font-family: 'Syne', sans-serif;
+  font-size: .95rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .04em;
+  margin-bottom: .6rem;
+}
+.j-step p { font-size: .82rem; color: #555; line-height: 1.65; max-width: 280px; }
+.j-step-left .j-step-content { margin-left: auto; }
+
+/* Journey truck */
+.journey-truck {
+  position: absolute;
+  left: calc(50% + 10px);
+  top: 200px;
+  transform: translateY(-50%);
+  z-index: 10;
+  pointer-events: none;
+  transition: top 1s cubic-bezier(0.4, 0, 0.2, 1);
+  filter: drop-shadow(0 0 8px rgba(204,255,0,0.55));
+  opacity: 0;
+  transition: top 1s cubic-bezier(0.4, 0, 0.2, 1), opacity .5s ease;
+}
+.journey-truck.visible { opacity: 1; }
+.road-traveled {
+  position: absolute;
+  left: 50%; top: 0;
+  width: 2px;
+  height: 0;
+  transform: translateX(-50%);
+  background: linear-gradient(to bottom, rgba(204,255,0,.7), rgba(204,255,0,.1));
+  transition: height 1s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1;
+  border-radius: 1px;
+}
+
+/* ─── BENEFITS ─── */
+#beneficios {
+  background: #080808;
+  border-bottom: 1px solid rgba(255,255,255,.07);
+  padding: 0;
+}
+.ben-head {
+  padding: 7rem 5% 3.5rem;
+  display: flex; justify-content: space-between;
+  align-items: flex-end; flex-wrap: wrap; gap: 2rem;
+}
+.ben-grid { display: grid; grid-template-columns: repeat(3,1fr); border-top: 1px solid rgba(255,255,255,.07); }
+.b-card {
+  padding: 2.8rem 5%;
+  border-right: 1px solid rgba(255,255,255,.07);
+  border-bottom: 1px solid rgba(255,255,255,.07);
+  position: relative; overflow: hidden;
+  transition: background .3s;
+}
+.b-card:nth-child(3n){ border-right: none; }
+.b-card:nth-child(n+4){ border-bottom: none; }
+.b-card::after {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: #ccff00; transform: scaleX(0); transform-origin: left;
+  transition: transform .4s;
+}
+.b-card:hover { background: rgba(204,255,0,.025); }
+.b-card:hover::after { transform: scaleX(1); }
+.b-n {
+  font-family: 'Syne', sans-serif; font-size: 4.5rem;
+  font-weight: 800; line-height: 1;
+  color: rgba(255,255,255,.04);
+  margin-bottom: .8rem; letter-spacing: -.03em;
+}
+.b-card h4 {
+  font-family: 'Syne', sans-serif; font-size: .92rem;
+  font-weight: 700; text-transform: uppercase;
+  letter-spacing: .05em; margin-bottom: .7rem;
+}
+.b-card p { font-size: .8rem; color: #555; line-height: 1.65; }
+.b-icon { margin-bottom: 1.2rem; }
+
+/* ─── CLIENTS ─── */
+#clientes {
+  background: #101010;
+  padding: 7rem 5%;
+  border-bottom: 1px solid rgba(255,255,255,.07);
+}
+.cl-head {
+  display: flex; justify-content: space-between;
+  align-items: flex-end; margin-bottom: 3.5rem;
+  flex-wrap: wrap; gap: 2rem;
+}
+.cl-grid {
+  display: grid; grid-template-columns: repeat(3,1fr);
+  gap: 1px; background: rgba(255,255,255,.07);
+  border: 1px solid rgba(255,255,255,.07);
+}
+.c-card {
+  background: #101010; padding: 3rem 2.5rem;
+  transition: background .3s;
+  position: relative; overflow: hidden;
+  display: flex; flex-direction: column; gap: 0;
+}
+.c-card::after {
+  content: ''; position: absolute; bottom: 0; left: 0; right: 0;
+  height: 1.5px; background: #ccff00;
+  transform: scaleX(0); transition: transform .4s;
+}
+.c-card:hover { background: rgba(204,255,0,.03); }
+.c-card:hover::after { transform: scaleX(1); }
+.c-icon-wrap { margin-bottom: 1.5rem; width: 52px; height: 52px; }
+.c-card h4 {
+  font-family: 'Syne', sans-serif; font-size: 1rem;
+  font-weight: 700; text-transform: uppercase;
+  letter-spacing: .06em; margin-bottom: .65rem;
+}
+.c-card p { font-size: .8rem; color: #555; line-height: 1.6; }
+
+/* ─── MANIFESTO ─── */
+.manifesto {
+  background: #ccff00; padding: 7rem 5%; text-align: center;
+}
+.manifesto blockquote {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(1.9rem, 4.5vw, 4.4rem);
+  font-weight: 800; text-transform: uppercase;
+  line-height: 1.0; letter-spacing: -.02em;
+  color: #080808; max-width: 960px;
+  margin: 0 auto 1.8rem;
+}
+.manifesto cite {
+  font-size: .72rem; font-style: normal;
+  letter-spacing: .2em; text-transform: uppercase;
+  color: rgba(8,8,8,.45);
+}
+
+/* ─── TEAM ─── */
+#equipo {
+  background: #080808; border-bottom: 1px solid rgba(255,255,255,.07); padding: 0;
+}
+.team-head {
+  padding: 7rem 5% 3.5rem;
+  display: flex; justify-content: space-between;
+  align-items: flex-end; flex-wrap: wrap; gap: 2rem;
+}
+.t-grid {
+  display: grid; grid-template-columns: repeat(4,1fr);
+  gap: 1px; background: rgba(255,255,255,.07);
+  border-top: 1px solid rgba(255,255,255,.07);
+}
+.t-card {
+  background: #080808; padding: 2.5rem;
+  transition: background .3s;
+}
+.t-card:hover { background: rgba(255,255,255,.02); }
+.t-av-wrap { margin-bottom: 1.4rem; }
+.t-av-anim { width: 64px; height: 64px; }
+.t-name { font-family: 'Syne', sans-serif; font-size: .95rem; font-weight: 700; margin-bottom: .2rem; }
+.t-role { font-size: .7rem; letter-spacing: .1em; text-transform: uppercase; color: #ccff00; margin-bottom: .9rem; }
+.t-card p { font-size: .78rem; color: #555; line-height: 1.55; }
+
+/* ─── CTA ─── */
+#contacto {
+  background: #101010; padding: 8rem 5%;
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 7rem; align-items: center;
+  border-bottom: 1px solid rgba(255,255,255,.07);
+}
+.cta-l h2 {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(2.8rem, 5.5vw, 5.5rem);
+  font-weight: 800; line-height: .95;
+  text-transform: uppercase; letter-spacing: -.02em;
+  margin-bottom: 1.6rem;
+}
+.cta-l h2 span { color: #ccff00; }
+.cta-l p { font-size: .95rem; color: #666; line-height: 1.72; max-width: 400px; margin-bottom: 2.2rem; }
+.cta-btns { display: flex; gap: .9rem; flex-wrap: wrap; }
+.cform { display: flex; flex-direction: column; gap: .9rem; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: .9rem; }
+input, textarea {
+  width: 100%; background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 2px; padding: .95rem 1.15rem;
+  font-family: 'DM Sans', sans-serif; font-size: .86rem;
+  color: #f0f0ec; outline: none; resize: none;
+  transition: border-color .2s, background .2s;
+}
+input::placeholder, textarea::placeholder { color: #444; }
+input:focus, textarea:focus { border-color: rgba(204,255,0,.45); background: rgba(204,255,0,.03); }
+.f-btn {
+  background: #ccff00; color: #080808;
+  font-family: 'Syne', sans-serif; font-weight: 700;
+  font-size: .8rem; letter-spacing: .1em; text-transform: uppercase;
+  padding: .95rem 2rem; border: none; border-radius: 2px;
+  cursor: pointer; align-self: flex-start;
+  transition: background .2s, transform .2s;
+}
+.f-btn:hover { background: #d9ff1a; transform: translateY(-2px); }
+.f-note { font-size: .7rem; color: #444; }
+
+/* ─── FOOTER ─── */
+footer {
+  background: #080808; padding: 2.2rem 5%;
+  display: flex; align-items: center; justify-content: space-between;
+  border-top: 1px solid rgba(255,255,255,.07);
+  flex-wrap: wrap; gap: 1.5rem;
+}
+.f-logo { font-family: 'Syne', sans-serif; font-size: .9rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; display: flex; align-items: center; gap: .5rem; }
+.f-dot { width: 6px; height: 6px; border-radius: 50%; background: #ccff00; }
+.f-links { display: flex; gap: 1.8rem; flex-wrap: wrap; }
+.f-links a { font-size: .73rem; color: #444; text-decoration: none; letter-spacing: .05em; transition: color .2s; }
+.f-links a:hover { color: #f0f0ec; }
+.f-badge { font-size: .67rem; color: #444; text-align: right; line-height: 1.5; }
+.f-badge strong { color: #ccff00; }
+
+/* ─── PROTO BADGE ─── */
+.proto {
+  position: fixed; bottom: 1.4rem; right: 1.4rem; z-index: 200;
+  background: rgba(8,8,8,.9); border: 1px solid rgba(204,255,0,.22);
+  color: #ccff00; font-size: .6rem; font-weight: 600;
+  letter-spacing: .16em; text-transform: uppercase;
+  padding: .45rem .95rem; border-radius: 2px;
+}
+
+/* ─── REVEAL ─── */
+.rv { opacity: 0; transform: translateY(24px); transition: opacity .72s ease, transform .72s ease; }
+.rv.on { opacity: 1; transform: none; }
+.d1{transition-delay:.1s}.d2{transition-delay:.2s}.d3{transition-delay:.3s}.d4{transition-delay:.4s}
+.wr .wd { display: inline-block; opacity: 0; transform: translateY(18px); transition: opacity .5s ease, transform .5s ease; }
+.wr.on .wd { opacity: 1; transform: none; }
+.wr.on .wd:nth-child(1){transition-delay:0s}
+.wr.on .wd:nth-child(2){transition-delay:.07s}
+.wr.on .wd:nth-child(3){transition-delay:.14s}
+.wr.on .wd:nth-child(4){transition-delay:.21s}
+.wr.on .wd:nth-child(5){transition-delay:.28s}
+.wr.on .wd:nth-child(6){transition-delay:.35s}
+.wr.on .wd:nth-child(7){transition-delay:.42s}
+.wr.on .wd:nth-child(8){transition-delay:.49s}
+
+/* ─── KEYFRAMES ─── */
+@keyframes fadeUp { from { opacity: 0; transform: translateY(28px); } to { opacity: 1; transform: none; } }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes spinSlow { to { transform: rotate(360deg); } }
+@keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+@keyframes dash { to { stroke-dashoffset: -24; } }
+@keyframes truckMove { 0% { transform: translateX(-3%); } 100% { transform: translateX(3%); } }
+
+/* ─── RESPONSIVE ─── */
+@media(max-width:1100px) {
+  #problem { grid-template-columns: 1fr; }
+  .chaos-visual { display: none; }
+  .scrolly-sticky { grid-template-columns: 1fr; }
+  .scrolly-orbit-col { display: none; }
+  .scrolly-panel { position: relative; opacity: 1; transform: none; }
+  #nexum-scroll { height: auto; }
+  .scrolly-sticky { position: relative; height: auto; }
+  .stats { grid-template-columns: repeat(2,1fr); }
+  .stat:nth-child(2){ border-right: none; }
+  .stat:nth-child(1),.stat:nth-child(2){ border-bottom: 1px solid rgba(255,255,255,.07); }
+  .cl-grid { grid-template-columns: repeat(2,1fr); }
+  .t-grid { grid-template-columns: repeat(2,1fr); }
+  #contacto { grid-template-columns: 1fr; gap: 4rem; }
+  .j-step { grid-template-columns: 50px 1fr; }
+  .j-step-left { display: none; }
+  .j-step-mid   { grid-column: 1; }
+  .j-step-right { grid-column: 2; text-align: left !important; padding-left: 1.5rem !important; padding-right: 0 !important; }
+  .j-step:nth-child(even) .j-step-left  { display: none; }
+  .j-step:nth-child(even) .j-step-right { grid-column: 2; }
+}
+@media(max-width:768px) {
+  .nav-links { display: none; }
+  #journey-line { display: none; }
+  .ben-grid { grid-template-columns: 1fr; }
+  .b-card { border-right: none!important; border-bottom: 1px solid rgba(255,255,255,.07)!important; }
+  .b-card:last-child { border-bottom: none!important; }
+  .cl-grid { grid-template-columns: 1fr; }
+  .t-grid { grid-template-columns: 1fr; }
+  .form-row { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- CURSOR -->
+<div id="cursor"></div>
+<div id="cursor-ring"></div>
+
+<!-- PROTO BADGE -->
+<div class="proto">&#11041; Prototipo Conceptual</div>
+
+<!-- JOURNEY DOTS -->
+<div id="journey-line">
+  <div class="j-dot active" data-section="hero" title="Inicio"></div>
+  <div class="j-connector"></div>
+  <div class="j-dot" data-section="problem" title="El Problema"></div>
+  <div class="j-connector"></div>
+  <div class="j-dot" data-section="nexum-scroll" title="Nexum"></div>
+  <div class="j-connector"></div>
+  <div class="j-dot" data-section="como" title="C&#243;mo funciona"></div>
+  <div class="j-connector"></div>
+  <div class="j-dot" data-section="beneficios" title="Beneficios"></div>
+  <div class="j-connector"></div>
+  <div class="j-dot" data-section="contacto" title="Contacto"></div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <a class="logo" href="#hero"><span class="logo-pulse"></span>Nexum Logistics</a>
+  <ul class="nav-links">
+    <li><a href="#problem">El Problema</a></li>
+    <li><a href="#nexum-scroll">Nexum</a></li>
+    <li><a href="#como">Proceso</a></li>
+    <li><a href="#beneficios">Beneficios</a></li>
+  </ul>
+  <a class="nav-cta" href="#contacto">Cont&aacute;ctanos</a>
+</nav>
+
+<!-- ══════════════ HERO ══════════════ -->
+<section id="hero">
+  <!-- Parallax particle layers (JS populated) -->
+  <div class="p-layer" id="pl1"></div>
+  <div class="p-layer" id="pl2"></div>
+  <div class="p-layer" id="pl3"></div>
+
+  <div class="h-grid" id="heroGrid"></div>
+  <div class="h-glow"></div>
+  <div class="h-top"></div>
+
+  <!-- Wireframe Truck -->
+  <div class="truck-layer" id="truckLayer">
+    <svg class="truck-svg" viewBox="0 0 1400 340" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <g stroke="#ccff00" stroke-width="1.4">
+        <rect x="340" y="88" width="980" height="188"/>
+        <line x1="450" y1="88" x2="450" y2="276"/><line x1="560" y1="88" x2="560" y2="276"/>
+        <line x1="670" y1="88" x2="670" y2="276"/><line x1="780" y1="88" x2="780" y2="276"/>
+        <line x1="890" y1="88" x2="890" y2="276"/><line x1="1000" y1="88" x2="1000" y2="276"/>
+        <line x1="1110" y1="88" x2="1110" y2="276"/><line x1="1220" y1="88" x2="1220" y2="276"/>
+        <line x1="340" y1="112" x2="1320" y2="112" stroke-width=".7" stroke-dasharray="8 6"/>
+        <rect x="1290" y="108" width="26" height="160" stroke-width="1"/>
+        <polygon points="88,144 152,88 340,88 340,276 88,276"/>
+        <polygon points="90,147 150,93 208,93 208,147" fill="rgba(204,255,0,.04)"/>
+        <rect x="212" y="96" width="118" height="52"/>
+        <rect x="212" y="160" width="118" height="108"/>
+        <line x1="314" y1="216" x2="326" y2="216" stroke-width="2"/>
+        <rect x="298" y="38" width="13" height="52"/><rect x="315" y="32" width="13" height="58"/>
+        <path d="M340,88 Q366,57 466,57 L466,88" stroke-width="1"/>
+        <line x1="88" y1="163" x2="51" y2="157"/><rect x="34" y="147" width="20" height="31"/>
+        <line x1="88" y1="276" x2="1316" y2="276" stroke-width="2.2"/>
+        <!-- Front wheel -->
+        <circle cx="174" cy="312" r="40"/><circle cx="174" cy="312" r="21"/>
+        <line x1="174" y1="272" x2="174" y2="352"/><line x1="134" y1="312" x2="214" y2="312"/>
+        <line x1="146" y1="284" x2="202" y2="340"/><line x1="202" y1="284" x2="146" y2="340"/>
+        <!-- Drive axles -->
+        <circle cx="840" cy="312" r="40"/><circle cx="840" cy="312" r="21"/>
+        <line x1="840" y1="272" x2="840" y2="352"/><line x1="800" y1="312" x2="880" y2="312"/>
+        <circle cx="958" cy="312" r="40"/><circle cx="958" cy="312" r="21"/>
+        <line x1="958" y1="272" x2="958" y2="352"/><line x1="918" y1="312" x2="998" y2="312"/>
+        <!-- Trailer axles -->
+        <circle cx="1140" cy="312" r="40"/><circle cx="1140" cy="312" r="21"/>
+        <line x1="1140" y1="272" x2="1140" y2="352"/><line x1="1100" y1="312" x2="1180" y2="312"/>
+        <circle cx="1258" cy="312" r="40"/><circle cx="1258" cy="312" r="21"/>
+        <line x1="1258" y1="272" x2="1258" y2="352"/><line x1="1218" y1="312" x2="1298" y2="312"/>
+        <rect x="328" y="256" width="82" height="14" stroke-width="1"/>
+      </g>
+      <g stroke="rgba(204,255,0,.2)" stroke-width=".7" stroke-dasharray="3 5">
+        <line x1="174" y1="88" x2="174" y2="276"/><line x1="340" y1="46" x2="1316" y2="46"/>
+      </g>
+      <text x="780" y="64" fill="rgba(204,255,0,.4)" font-family="'DM Sans',sans-serif" font-size="10" letter-spacing="1.5">UNIDAD RASTREADA &mdash; NXM-0042 &middot; EN TR&Aacute;NSITO</text>
+      <text x="94" y="70" fill="rgba(204,255,0,.4)" font-family="'DM Sans',sans-serif" font-size="10" letter-spacing="1.5">CABINA</text>
+      <text x="520" y="70" fill="rgba(204,255,0,.4)" font-family="'DM Sans',sans-serif" font-size="10" letter-spacing="1.5">CARGA ACTIVA &middot; 18.4 T</text>
+    </svg>
+  </div>
+  <div class="scan-beam"></div>
+
+  <div class="hero-content">
+    <div class="h-eye">Logistics Brokerage Operator &mdash; El inicio del viaje</div>
+    <h1 class="h1">
+      <span class="w">Hemos</span>&nbsp;<span class="w">reinventado</span><br>
+      <span class="w">la</span>&nbsp;<span class="w">log&iacute;stica.</span>
+    </h1>
+    <div class="h-bottom">
+      <p class="h-sub">No somos un transportista. Somos el orquestador estrat&eacute;gico que transforma el caos de tu cadena de suministro en resultados claros, medibles y sin excusas.</p>
+      <div class="h-actions">
+        <a class="btn-lime" href="#contacto">Comienza el viaje</a>
+        <a class="btn-ghost" href="#problem">Ver el problema &rarr;</a>
+      </div>
+    </div>
+  </div>
+  <div class="h-scroll">Scroll</div>
+</section>
+
+<!-- STATS -->
+<div class="stats">
+  <div class="stat rv"><div class="stat-n">+<span>240</span></div><div class="stat-l">Operadores log&iacute;sticos<br>en nuestra red</div></div>
+  <div class="stat rv d1"><div class="stat-n"><span>98</span>%</div><div class="stat-l">Entregas a tiempo<br>promedio de red</div></div>
+  <div class="stat rv d2"><div class="stat-n"><span>3</span>x</div><div class="stat-l">Mayor visibilidad vs.<br>operador tradicional</div></div>
+  <div class="stat rv d3"><div class="stat-n">-<span>23</span>%</div><div class="stat-l">Reducci&oacute;n costos<br>log&iacute;sticos promedio</div></div>
+</div>
+
+<!-- ══════════════ PROBLEM ══════════════ -->
+<section id="problem">
+  <div>
+    <div class="s-tag rv">El problema</div>
+    <h2 class="disp wr rv d1" style="color:#080808">
+      <span class="wd">Logística</span><br>
+      <span class="wd" style="border-bottom:3px solid #ccff00">fragmentada.</span><br>
+      <span class="wd">Sin</span> <span class="wd">control.</span>
+    </h2>
+    <p class="body-p rv d2" style="color:rgba(8,8,8,.55)">
+      Hoy, tu empresa trabaja con 5, 10, 15 proveedores distintos. Cada uno con su propio sistema, sus propias excusas y su propio dashboard. T&uacute; eres el pegamento entre todos ellos &mdash; y eso te est&aacute; costando tiempo, dinero y claridad.
+    </p>
+    <p class="body-p rv d3" style="color:rgba(8,8,8,.45);margin-top:-1rem">
+      El problema no son los operadores. El problema es que nadie los orquesta.
+    </p>
+  </div>
+  <div class="chaos-visual rv d2">
+    <!-- Animated chaos network -->
+    <svg class="chaos-svg" viewBox="0 0 400 400">
+      <defs>
+        <filter id="glow"><feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      </defs>
+      <!-- Chaotic random connecting lines -->
+      <g stroke="rgba(8,8,8,.2)" stroke-width="1">
+        <line x1="60" y1="80" x2="200" y2="160"/><line x1="60" y1="80" x2="340" y2="120"/>
+        <line x1="60" y1="80" x2="100" y2="300"/><line x1="340" y1="120" x2="280" y2="320"/>
+        <line x1="280" y1="320" x2="100" y2="300"/><line x1="200" y1="60" x2="340" y2="200"/>
+        <line x1="200" y1="60" x2="80" y2="250"/><line x1="340" y1="200" x2="120" y2="350"/>
+        <line x1="80" y1="250" x2="350" y2="300"/><line x1="150" y1="180" x2="320" y2="260"/>
+      </g>
+      <!-- Nodes scattered -->
+      <g fill="rgba(8,8,8,.12)" stroke="rgba(8,8,8,.3)" stroke-width="1">
+        <circle cx="60" cy="80" r="14"/><circle cx="340" cy="120" r="10"/>
+        <circle cx="200" cy="60" r="12"/><circle cx="100" cy="300" r="11"/>
+        <circle cx="280" cy="320" r="13"/><circle cx="350" cy="300" r="9"/>
+        <circle cx="80" cy="250" r="10"/><circle cx="320" cy="260" r="8"/>
+        <circle cx="150" cy="180" r="9"/><circle cx="200" cy="160" r="7"/>
+        <circle cx="340" cy="200" r="11"/><circle cx="120" cy="350" r="8"/>
+      </g>
+      <!-- Warning icons on some nodes (animated X) -->
+      <g stroke="rgba(200,60,40,.7)" stroke-width="1.5">
+        <line x1="56" y1="76" x2="64" y2="84"/><line x1="64" y1="76" x2="56" y2="84"/>
+        <line x1="276" y1="316" x2="284" y2="324"/><line x1="284" y1="316" x2="276" y2="324"/>
+        <line x1="346" y1="296" x2="354" y2="304"/><line x1="354" y1="296" x2="346" y2="304"/>
+      </g>
+      <!-- Dashed "missing connection" lines -->
+      <g stroke="rgba(8,8,8,.15)" stroke-width="1" stroke-dasharray="4 6">
+        <line x1="200" y1="60" x2="60" y2="80"/><line x1="150" y1="180" x2="100" y2="300"/>
+      </g>
+      <text x="200" y="210" text-anchor="middle" font-family="'Syne',sans-serif" font-size="13" font-weight="700" fill="rgba(8,8,8,.4)" letter-spacing="1">SIN CONTROL</text>
+      <text x="200" y="228" text-anchor="middle" font-family="'DM Sans',sans-serif" font-size="9" fill="rgba(8,8,8,.28)" letter-spacing="1.5">15 PROVEEDORES · 0 VISIBILIDAD</text>
+    </svg>
+  </div>
+</section>
+
+<!-- ══════════════ NEXUM SCROLLYTELLING ══════════════ -->
+<div id="nexum-scroll">
+  <div class="scrolly-sticky" id="scrollySticky">
+
+    <!-- Left: text panels -->
+    <div class="scrolly-text-col">
+      <!-- Panel 0: intro -->
+      <div class="scrolly-panel" id="panel-0">
+        <div class="s-tag">Ingresa Nexum</div>
+        <h2 class="disp">El punto<br>de control<br><span class="lime">que faltaba.</span></h2>
+        <p class="body-p">Nexum es el orquestador estrat&eacute;gico que se sit&uacute;a entre tu empresa y todos tus operadores log&iacute;sticos. Un cerebro central que lo conecta todo.</p>
+      </div>
+      <!-- Panel 1: clients -->
+      <div class="scrolly-panel" id="panel-1">
+        <div class="s-tag">Tu empresa</div>
+        <h2 class="disp">T&uacute; eres<br>el<span class="lime"> destino.</span></h2>
+        <p class="body-p">Marcas, retailers, e-commerce, industrias. No importa tu sector &mdash; si mueves productos, Nexum es tu aliado estrat&eacute;gico. T&uacute; das una instrucci&oacute;n. Nosotros ejecutamos.</p>
+      </div>
+      <!-- Panel 2: network -->
+      <div class="scrolly-panel" id="panel-2">
+        <div class="s-tag">La red</div>
+        <h2 class="disp">240+<br>operadores.<br><span class="lime">Una voz.</span></h2>
+        <p class="body-p">Primera milla, milla media, &uacute;ltima milla. A&eacute;reo, mar&iacute;timo, terrestre. Nexum gestiona toda la red &mdash; seleccionando siempre al mejor proveedor para cada tramo.</p>
+      </div>
+      <!-- Panel 3: data -->
+      <div class="scrolly-panel" id="panel-3">
+        <div class="s-tag">El control</div>
+        <h2 class="disp">Datos.<br>Visibilidad.<br><span class="lime">Resultados.</span></h2>
+        <p class="body-p">Dashboard unificado en tiempo real. Alertas proactivas. Reportes accionables. Sabes exactamente qu&eacute; est&aacute; pasando en cada kil&oacute;metro de tu cadena &mdash; siempre.</p>
+      </div>
+    </div>
+
+    <!-- Right: orbit visual -->
+    <div class="scrolly-orbit-col">
+      <div class="orbit-bg-grid" id="orbitGrid"></div>
+
+      <div class="orbit-container" id="orbitContainer">
+        <!-- Pulse rings -->
+        <div class="orbit-pulse orbit-pulse-1"></div>
+        <div class="orbit-pulse orbit-pulse-2"></div>
+
+        <!-- Orbit rings -->
+        <div class="orbit-ring orbit-ring-1" id="ring1"></div>
+        <div class="orbit-ring orbit-ring-2" id="ring2"></div>
+
+        <!-- Center -->
+        <div class="orbit-center">
+          <div class="orbit-center-inner">
+            <span class="orbit-center-label">NEXUM</span>
+            <span class="orbit-center-sub">LOGISTICS</span>
+          </div>
+        </div>
+
+        <!-- Nodes (positioned via JS) -->
+        <div class="orbit-node" id="node-ecomm" data-pos="top">
+          <svg class="anim-icon" viewBox="0 0 28 28" fill="none">
+            <!-- Package box -->
+            <rect x="5" y="11" width="18" height="14" rx="1" stroke="#ccff00" stroke-width="1.3"/>
+            <line x1="5" y1="16" x2="23" y2="16" stroke="#ccff00" stroke-width="1"/>
+            <line x1="14" y1="11" x2="14" y2="16" stroke="#ccff00" stroke-width="1"/>
+            <!-- Rising arrow -->
+            <line x1="14" y1="9" x2="14" y2="4" stroke="#ccff00" stroke-width="1.3" stroke-dasharray="3 2">
+              <animate attributeName="stroke-dashoffset" values="0;-10" dur="1.2s" repeatCount="indefinite"/>
+            </line>
+            <polyline points="11,6 14,3 17,6" stroke="#ccff00" stroke-width="1.3" fill="none"/>
+          </svg>
+          <span class="orbit-node-label">E-COMM</span>
+        </div>
+
+        <div class="orbit-node" id="node-retail" data-pos="tr">
+          <svg class="anim-icon" viewBox="0 0 28 28" fill="none">
+            <!-- Store grid - pulsing dots -->
+            <circle cx="10" cy="10" r="2.5" fill="#ccff00"><animate attributeName="opacity" values="1;.3;1" dur="1.8s" begin="0s" repeatCount="indefinite"/></circle>
+            <circle cx="18" cy="10" r="2.5" fill="#ccff00"><animate attributeName="opacity" values="1;.3;1" dur="1.8s" begin=".3s" repeatCount="indefinite"/></circle>
+            <circle cx="10" cy="18" r="2.5" fill="#ccff00"><animate attributeName="opacity" values="1;.3;1" dur="1.8s" begin=".6s" repeatCount="indefinite"/></circle>
+            <circle cx="18" cy="18" r="2.5" fill="#ccff00"><animate attributeName="opacity" values="1;.3;1" dur="1.8s" begin=".9s" repeatCount="indefinite"/></circle>
+            <line x1="10" y1="10" x2="18" y2="10" stroke="rgba(204,255,0,.3)" stroke-width=".8"/>
+            <line x1="10" y1="18" x2="18" y2="18" stroke="rgba(204,255,0,.3)" stroke-width=".8"/>
+            <line x1="10" y1="10" x2="10" y2="18" stroke="rgba(204,255,0,.3)" stroke-width=".8"/>
+            <line x1="18" y1="10" x2="18" y2="18" stroke="rgba(204,255,0,.3)" stroke-width=".8"/>
+          </svg>
+          <span class="orbit-node-label">RETAIL</span>
+        </div>
+
+        <div class="orbit-node" id="node-import" data-pos="br">
+          <svg class="anim-icon" viewBox="0 0 28 28" fill="none">
+            <!-- Ship hull -->
+            <path d="M6,16 L8,20 L20,20 L22,16" stroke="#ccff00" stroke-width="1.3" fill="none"/>
+            <rect x="11" y="11" width="6" height="6" stroke="#ccff00" stroke-width="1.1" fill="none"/>
+            <line x1="14" y1="8" x2="14" y2="11" stroke="#ccff00" stroke-width="1.1"/>
+            <!-- Wave -->
+            <path d="M4,22 Q7,20 10,22 Q13,24 16,22 Q19,20 22,22" stroke="rgba(204,255,0,.5)" stroke-width="1" fill="none">
+              <animate attributeName="d" values="M4,22 Q7,20 10,22 Q13,24 16,22 Q19,20 22,22;M4,22 Q7,24 10,22 Q13,20 16,22 Q19,24 22,22;M4,22 Q7,20 10,22 Q13,24 16,22 Q19,20 22,22" dur="2s" repeatCount="indefinite"/>
+            </path>
+          </svg>
+          <span class="orbit-node-label">IMPORT</span>
+        </div>
+
+        <div class="orbit-node" id="node-marcas" data-pos="bottom">
+          <svg class="anim-icon" viewBox="0 0 28 28" fill="none">
+            <!-- Brand signal - expanding rings -->
+            <circle cx="14" cy="14" r="3.5" fill="#ccff00"/>
+            <circle cx="14" cy="14" r="3.5" stroke="#ccff00" stroke-width="1" fill="none">
+              <animate attributeName="r" values="3.5;10" dur="2s" repeatCount="indefinite"/>
+              <animate attributeName="opacity" values=".8;0" dur="2s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx="14" cy="14" r="3.5" stroke="#ccff00" stroke-width="1" fill="none">
+              <animate attributeName="r" values="3.5;10" dur="2s" begin="1s" repeatCount="indefinite"/>
+              <animate attributeName="opacity" values=".8;0" dur="2s" begin="1s" repeatCount="indefinite"/>
+            </circle>
+          </svg>
+          <span class="orbit-node-label">MARCAS</span>
+        </div>
+
+        <div class="orbit-node" id="node-industria" data-pos="bl">
+          <svg class="anim-icon" viewBox="0 0 28 28" fill="none">
+            <!-- Rotating gear -->
+            <g style="transform-origin:14px 14px;animation:spin 4s linear infinite">
+              <circle cx="14" cy="14" r="6" stroke="#ccff00" stroke-width="1.3" fill="none"/>
+              <circle cx="14" cy="14" r="2.5" stroke="#ccff00" stroke-width="1" fill="rgba(204,255,0,.15)"/>
+              <!-- Gear teeth -->
+              <rect x="12.5" y="5" width="3" height="4" rx=".8" fill="rgba(204,255,0,.6)"/>
+              <rect x="12.5" y="19" width="3" height="4" rx=".8" fill="rgba(204,255,0,.6)"/>
+              <rect x="5" y="12.5" width="4" height="3" rx=".8" fill="rgba(204,255,0,.6)"/>
+              <rect x="19" y="12.5" width="4" height="3" rx=".8" fill="rgba(204,255,0,.6)"/>
+              <rect x="7.5" y="7.5" width="3" height="4" rx=".8" fill="rgba(204,255,0,.5)" transform="rotate(45 9 9.5)"/>
+              <rect x="17.5" y="17.5" width="3" height="4" rx=".8" fill="rgba(204,255,0,.5)" transform="rotate(45 19 19.5)"/>
+              <rect x="17.5" y="7.5" width="3" height="4" rx=".8" fill="rgba(204,255,0,.5)" transform="rotate(-45 19 9.5)"/>
+              <rect x="7.5" y="17.5" width="3" height="4" rx=".8" fill="rgba(204,255,0,.5)" transform="rotate(-45 9 19.5)"/>
+            </g>
+          </svg>
+          <span class="orbit-node-label">INDUSTRIA</span>
+        </div>
+
+        <div class="orbit-node" id="node-aereo" data-pos="tl">
+          <svg class="anim-icon" viewBox="0 0 28 28" fill="none">
+            <!-- Plane trajectory arc -->
+            <path d="M5,22 Q14,8 23,12" stroke="rgba(204,255,0,.25)" stroke-width="1" fill="none" stroke-dasharray="2 3"/>
+            <!-- Moving plane dot -->
+            <circle r="3" fill="#ccff00">
+              <animateMotion dur="2.5s" repeatCount="indefinite" path="M5,22 Q14,8 23,12"/>
+            </circle>
+            <!-- Small plane body lines -->
+            <line x1="13" y1="14" x2="16" y2="11" stroke="rgba(204,255,0,.4)" stroke-width="1"/>
+          </svg>
+          <span class="orbit-node-label">A&Eacute;REO</span>
+        </div>
+
+        <!-- Connector lines (SVG overlay) -->
+        <svg style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible" id="connectorSvg">
+          <defs>
+            <marker id="arrowHead" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+              <path d="M0,0 L6,3 L0,6 Z" fill="rgba(204,255,0,.4)"/>
+            </marker>
+          </defs>
+          <!-- Lines drawn by JS -->
+        </svg>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════ HOW IT WORKS (Journey Path) ══════════════ -->
+<section id="como">
+  <div class="como-road"></div>
+  <div class="road-traveled" id="roadTraveled"></div>
+
+  <!-- Journey truck -->
+  <div class="journey-truck" id="journeyTruck">
+    <svg viewBox="0 0 130 52" fill="none" xmlns="http://www.w3.org/2000/svg" width="130">
+      <g stroke="#ccff00" stroke-width="1.3">
+        <!-- Trailer body -->
+        <rect x="38" y="8" width="84" height="28"/>
+        <!-- Trailer ribs -->
+        <line x1="56" y1="8" x2="56" y2="36"/>
+        <line x1="74" y1="8" x2="74" y2="36"/>
+        <line x1="92" y1="8" x2="92" y2="36"/>
+        <line x1="110" y1="8" x2="110" y2="36"/>
+        <!-- Top bracing -->
+        <line x1="38" y1="14" x2="122" y2="14" stroke-width=".7" stroke-dasharray="4 4"/>
+        <!-- Cabin -->
+        <polygon points="8,14 22,8 38,8 38,36 8,36"/>
+        <!-- Windshield -->
+        <polygon points="9,15 21,9 28,9 28,15" fill="rgba(204,255,0,.06)"/>
+        <!-- Cabin window -->
+        <rect x="28" y="10" width="8" height="8"/>
+        <!-- Cabin door line -->
+        <line x1="28" y1="22" x2="36" y2="22"/>
+        <!-- Exhaust -->
+        <rect x="32" y="2" width="4" height="8"/>
+        <!-- Mirror -->
+        <rect x="4" y="16" width="5" height="8"/>
+        <!-- Chassis line -->
+        <line x1="8" y1="36" x2="122" y2="36" stroke-width="1.8"/>
+        <!-- Coupling -->
+        <rect x="30" y="32" width="10" height="4" stroke-width="1"/>
+        <!-- Front wheel -->
+        <circle cx="18" cy="44" r="7"/><circle cx="18" cy="44" r="3.5"/>
+        <line x1="18" y1="37" x2="18" y2="51"/><line x1="11" y1="44" x2="25" y2="44"/>
+        <!-- Drive wheel 1 -->
+        <circle cx="72" cy="44" r="7"/><circle cx="72" cy="44" r="3.5"/>
+        <line x1="72" y1="37" x2="72" y2="51"/><line x1="65" y1="44" x2="79" y2="44"/>
+        <!-- Drive wheel 2 -->
+        <circle cx="88" cy="44" r="7"/><circle cx="88" cy="44" r="3.5"/>
+        <line x1="88" y1="37" x2="88" y2="51"/><line x1="81" y1="44" x2="95" y2="44"/>
+        <!-- Trailer wheel -->
+        <circle cx="112" cy="44" r="7"/><circle cx="112" cy="44" r="3.5"/>
+        <line x1="112" y1="37" x2="112" y2="51"/>
+      </g>
+      <!-- Scan effect on trailer -->
+      <line x1="38" y1="22" x2="122" y2="22" stroke="rgba(204,255,0,0.25)" stroke-width=".7" stroke-dasharray="3 3">
+        <animate attributeName="stroke-dashoffset" values="0;-12" dur="1s" repeatCount="indefinite"/>
+      </line>
+      <!-- Speed lines behind truck -->
+      <g stroke="rgba(204,255,0,0.3)" stroke-width="1" stroke-linecap="round">
+        <line x1="0" y1="20" x2="7" y2="20"><animate attributeName="x1" values="0;5;0" dur=".8s" repeatCount="indefinite"/></line>
+        <line x1="0" y1="26" x2="5" y2="26"><animate attributeName="x1" values="0;4;0" dur=".8s" begin=".15s" repeatCount="indefinite"/></line>
+        <line x1="0" y1="31" x2="6" y2="31"><animate attributeName="x1" values="0;5;0" dur=".8s" begin=".3s" repeatCount="indefinite"/></line>
+      </g>
+    </svg>
+  </div>
+  <div class="como-head">
+    <div>
+      <div class="s-tag rv">El camino</div>
+      <h2 class="disp rv d1">Tu viaje<br>con <span class="lime">Nexum.</span></h2>
+    </div>
+    <p style="font-size:.88rem;color:#555;max-width:280px;line-height:1.72;font-family:'DM Sans',sans-serif" class="rv d2">Cuatro hitos. Un s&oacute;lo responsable. Resultados desde el d&iacute;a uno.</p>
+  </div>
+
+  <div class="journey-steps">
+    <!-- Step 1 -->
+    <div class="j-step">
+      <div class="j-step-left">
+        <div class="j-step-content">
+          <h4>Diagn&oacute;stico</h4>
+          <p>Auditamos tu operaci&oacute;n completa. Mapeamos ineficiencias, riesgos y oportunidades con datos reales &mdash; no suposiciones.</p>
+        </div>
+      </div>
+      <div class="j-step-mid"><div class="j-step-num">01</div></div>
+      <div class="j-step-right"><div class="j-step-content" style="opacity:0"></div></div>
+    </div>
+    <!-- Step 2 -->
+    <div class="j-step">
+      <div class="j-step-left"><div class="j-step-content" style="opacity:0"></div></div>
+      <div class="j-step-mid"><div class="j-step-num">02</div></div>
+      <div class="j-step-right">
+        <div class="j-step-content">
+          <h4>Dise&ntilde;o de Red</h4>
+          <p>Construimos tu red de operadores a medida: los mejores proveedores para cada tramo, ruta y tipo de carga de tu operaci&oacute;n.</p>
+        </div>
+      </div>
+    </div>
+    <!-- Step 3 -->
+    <div class="j-step">
+      <div class="j-step-left">
+        <div class="j-step-content">
+          <h4>Orquestaci&oacute;n</h4>
+          <p>Coordinamos, supervisamos y optimizamos en tiempo real. T&uacute; das una sola instrucci&oacute;n; nosotros hacemos que todo suceda.</p>
+        </div>
+      </div>
+      <div class="j-step-mid"><div class="j-step-num">03</div></div>
+      <div class="j-step-right"><div class="j-step-content" style="opacity:0"></div></div>
+    </div>
+    <!-- Step 4 -->
+    <div class="j-step">
+      <div class="j-step-left"><div class="j-step-content" style="opacity:0"></div></div>
+      <div class="j-step-mid"><div class="j-step-num">04</div></div>
+      <div class="j-step-right">
+        <div class="j-step-content">
+          <h4>Resultados + Data</h4>
+          <p>Dashboard en vivo, alertas proactivas y mejora continua. Tu operaci&oacute;n se vuelve m&aacute;s eficiente mes a mes &mdash; autom&aacute;ticamente.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ BENEFITS ══════════════ -->
+<section id="beneficios">
+  <div class="ben-head">
+    <div>
+      <div class="s-tag rv">Lo que logras</div>
+      <h2 class="disp rv d1">El destino<br>final.</h2>
+    </div>
+    <p style="font-size:.88rem;color:#555;max-width:300px;line-height:1.72;font-family:'DM Sans',sans-serif" class="rv d2">Cada ventaja es una decisi&oacute;n de dise&ntilde;o para que tu negocio escale sin fricci&oacute;n.</p>
+  </div>
+  <div class="ben-grid">
+    <div class="b-card rv">
+      <div class="b-icon">
+        <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+          <!-- Single point icon: converging lines -->
+          <circle cx="18" cy="18" r="5" stroke="#ccff00" stroke-width="1.3" fill="rgba(204,255,0,.08)"/>
+          <line x1="5" y1="5" x2="14" y2="14" stroke="rgba(204,255,0,.5)" stroke-width="1" stroke-dasharray="3 2"><animate attributeName="stroke-dashoffset" values="0;-10" dur="1.5s" repeatCount="indefinite"/></line>
+          <line x1="31" y1="5" x2="22" y2="14" stroke="rgba(204,255,0,.5)" stroke-width="1" stroke-dasharray="3 2"><animate attributeName="stroke-dashoffset" values="0;-10" dur="1.5s" begin=".2s" repeatCount="indefinite"/></line>
+          <line x1="5" y1="31" x2="14" y2="22" stroke="rgba(204,255,0,.5)" stroke-width="1" stroke-dasharray="3 2"><animate attributeName="stroke-dashoffset" values="0;-10" dur="1.5s" begin=".4s" repeatCount="indefinite"/></line>
+          <line x1="31" y1="31" x2="22" y2="22" stroke="rgba(204,255,0,.5)" stroke-width="1" stroke-dasharray="3 2"><animate attributeName="stroke-dashoffset" values="0;-10" dur="1.5s" begin=".6s" repeatCount="indefinite"/></line>
+        </svg>
+      </div>
+      <div class="b-n">01</div>
+      <h4>Un solo responsable</h4>
+      <p>Sin peloteos entre proveedores. Nexum asume el resultado completo, sin excusas.</p>
+    </div>
+    <div class="b-card rv d1">
+      <div class="b-icon">
+        <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+          <!-- Growing bars -->
+          <rect x="5" y="26" width="6" height="6" fill="rgba(204,255,0,.3)"><animate attributeName="height" values="4;8;4" dur="2s" repeatCount="indefinite"/><animate attributeName="y" values="28;24;28" dur="2s" repeatCount="indefinite"/></rect>
+          <rect x="14" y="20" width="6" height="12" fill="rgba(204,255,0,.5)"><animate attributeName="height" values="8;14;8" dur="2s" begin=".3s" repeatCount="indefinite"/><animate attributeName="y" values="24;18;24" dur="2s" begin=".3s" repeatCount="indefinite"/></rect>
+          <rect x="23" y="13" width="6" height="19" fill="rgba(204,255,0,.8)"><animate attributeName="height" values="14;22;14" dur="2s" begin=".6s" repeatCount="indefinite"/><animate attributeName="y" values="18;10;18" dur="2s" begin=".6s" repeatCount="indefinite"/></rect>
+          <line x1="3" y1="32" x2="33" y2="32" stroke="rgba(204,255,0,.25)" stroke-width="1"/>
+        </svg>
+      </div>
+      <div class="b-n">02</div>
+      <h4>Escala sin capex</h4>
+      <p>Crece sin comprar flotillas ni bodegas. Tu operaci&oacute;n escala con una llamada.</p>
+    </div>
+    <div class="b-card rv d2">
+      <div class="b-icon">
+        <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+          <!-- Cost down arrow -->
+          <line x1="18" y1="6" x2="18" y2="26" stroke="#ccff00" stroke-width="1.5"/>
+          <polyline points="12,20 18,27 24,20" stroke="#ccff00" stroke-width="1.5" fill="none"/>
+          <!-- Minus signs -->
+          <line x1="7" y1="12" x2="13" y2="12" stroke="rgba(204,255,0,.4)" stroke-width="1.3"/>
+          <line x1="23" y1="12" x2="29" y2="12" stroke="rgba(204,255,0,.4)" stroke-width="1.3"/>
+        </svg>
+      </div>
+      <div class="b-n">03</div>
+      <h4>Costos optimizados</h4>
+      <p>Accedes a tarifas de red consolidada. Menos costo por env&iacute;o, m&aacute;s margen para ti.</p>
+    </div>
+    <div class="b-card rv">
+      <div class="b-icon">
+        <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+          <!-- Eye / visibility -->
+          <path d="M4,18 Q18,6 32,18 Q18,30 4,18Z" stroke="#ccff00" stroke-width="1.3" fill="none"/>
+          <circle cx="18" cy="18" r="5" stroke="#ccff00" stroke-width="1.3" fill="rgba(204,255,0,.1)"/>
+          <circle cx="18" cy="18" r="2" fill="#ccff00"><animate attributeName="r" values="1.5;3;1.5" dur="2.5s" repeatCount="indefinite"/></circle>
+        </svg>
+      </div>
+      <div class="b-n">04</div>
+      <h4>Visibilidad total</h4>
+      <p>Cada embarque en tiempo real en un solo panel. Sabes qu&eacute; pasa antes que tu cliente.</p>
+    </div>
+    <div class="b-card rv d1">
+      <div class="b-icon">
+        <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+          <!-- Shield / resilience -->
+          <path d="M18,4 L30,9 L30,20 Q30,28 18,32 Q6,28 6,20 L6,9 Z" stroke="#ccff00" stroke-width="1.3" fill="rgba(204,255,0,.05)"/>
+          <polyline points="12,18 16,22 24,14" stroke="#ccff00" stroke-width="1.5" fill="none"/>
+        </svg>
+      </div>
+      <div class="b-n">05</div>
+      <h4>Resiliencia operativa</h4>
+      <p>Si un operador falla, activamos el siguiente. Tu operaci&oacute;n nunca se detiene.</p>
+    </div>
+    <div class="b-card rv d2">
+      <div class="b-icon">
+        <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+          <!-- Focus/target -->
+          <circle cx="18" cy="18" r="12" stroke="rgba(204,255,0,.2)" stroke-width="1"/>
+          <circle cx="18" cy="18" r="7" stroke="rgba(204,255,0,.4)" stroke-width="1"/>
+          <circle cx="18" cy="18" r="3" fill="#ccff00"/>
+          <line x1="18" y1="4" x2="18" y2="10" stroke="rgba(204,255,0,.3)" stroke-width="1"/>
+          <line x1="18" y1="26" x2="18" y2="32" stroke="rgba(204,255,0,.3)" stroke-width="1"/>
+          <line x1="4" y1="18" x2="10" y2="18" stroke="rgba(204,255,0,.3)" stroke-width="1"/>
+          <line x1="26" y1="18" x2="32" y2="18" stroke="rgba(204,255,0,.3)" stroke-width="1"/>
+        </svg>
+      </div>
+      <div class="b-n">06</div>
+      <h4>Foco en tu negocio</h4>
+      <p>Deja la log&iacute;stica a los expertos. Dedica tu energ&iacute;a a vender, crecer e innovar.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ CLIENTS ══════════════ -->
+<section id="clientes">
+  <div class="cl-head">
+    <div>
+      <div class="s-tag rv">Sectores</div>
+      <h2 class="disp rv d1">Para<br>todos.</h2>
+    </div>
+    <p style="font-size:.88rem;color:#555;max-width:300px;line-height:1.72;font-family:'DM Sans',sans-serif" class="rv d2">Si tu cadena necesita funcionar con precisi&oacute;n, Nexum es tu aliado &mdash; sin importar industria ni volumen.</p>
+  </div>
+  <div class="cl-grid">
+    <div class="c-card rv">
+      <div class="c-icon-wrap">
+        <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
+          <!-- Retail: store with pulsing network dots -->
+          <rect x="10" y="22" width="32" height="22" rx="2" stroke="#ccff00" stroke-width="1.3" fill="none"/>
+          <path d="M10,22 L16,12 L36,12 L42,22" stroke="#ccff00" stroke-width="1.3" fill="none"/>
+          <rect x="21" y="30" width="10" height="14" stroke="#ccff00" stroke-width="1" fill="none"/>
+          <rect x="13" y="26" width="8" height="8" stroke="rgba(204,255,0,.4)" stroke-width="1" fill="none"/>
+          <rect x="31" y="26" width="8" height="8" stroke="rgba(204,255,0,.4)" stroke-width="1" fill="none"/>
+          <circle cx="17" cy="30" r="1.5" fill="#ccff00"><animate attributeName="opacity" values="1;.3;1" dur="1.8s" repeatCount="indefinite"/></circle>
+          <circle cx="35" cy="30" r="1.5" fill="#ccff00"><animate attributeName="opacity" values="1;.3;1" dur="1.8s" begin=".5s" repeatCount="indefinite"/></circle>
+        </svg>
+      </div>
+      <h4>Retail</h4>
+      <p>Gesti&oacute;n multicanal, reposici&oacute;n de inventarios y distribuci&oacute;n a tiendas sin fricci&oacute;n.</p>
+    </div>
+    <div class="c-card rv d1">
+      <div class="c-icon-wrap">
+        <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
+          <!-- E-commerce: box + fast delivery lines -->
+          <rect x="12" y="18" width="28" height="22" rx="2" stroke="#ccff00" stroke-width="1.3" fill="none"/>
+          <line x1="12" y1="26" x2="40" y2="26" stroke="#ccff00" stroke-width="1"/>
+          <line x1="26" y1="18" x2="26" y2="26" stroke="#ccff00" stroke-width="1"/>
+          <!-- Speed lines -->
+          <line x1="4" y1="24" x2="11" y2="24" stroke="rgba(204,255,0,.5)" stroke-width="1.3" stroke-dasharray="3 2"><animate attributeName="x1" values="4;8;4" dur="1s" repeatCount="indefinite"/></line>
+          <line x1="4" y1="28" x2="9" y2="28" stroke="rgba(204,255,0,.35)" stroke-width="1" stroke-dasharray="2 3"><animate attributeName="x1" values="4;7;4" dur="1s" begin=".2s" repeatCount="indefinite"/></line>
+          <!-- Check mark -->
+          <polyline points="19,32 23,36 33,26" stroke="#ccff00" stroke-width="1.4" fill="none" opacity=".6"/>
+        </svg>
+      </div>
+      <h4>E-Commerce</h4>
+      <p>Entregas r&aacute;pidas que impulsan tu reputaci&oacute;n y la lealtad de tus compradores.</p>
+    </div>
+    <div class="c-card rv d2">
+      <div class="c-icon-wrap">
+        <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
+          <!-- Industrial: factory with rotating cog -->
+          <rect x="8" y="24" width="36" height="20" rx="1" stroke="#ccff00" stroke-width="1.3" fill="none"/>
+          <rect x="14" y="16" width="10" height="10" stroke="#ccff00" stroke-width="1" fill="none"/>
+          <rect x="28" y="18" width="7" height="8" stroke="#ccff00" stroke-width="1" fill="none"/>
+          <!-- Chimney smoke dots -->
+          <circle cx="17" cy="12" r="2" fill="rgba(204,255,0,.4)"><animate attributeName="cy" values="12;7;12" dur="2s" repeatCount="indefinite"/><animate attributeName="opacity" values=".5;0;.5" dur="2s" repeatCount="indefinite"/></circle>
+          <circle cx="21" cy="10" r="1.5" fill="rgba(204,255,0,.3)"><animate attributeName="cy" values="10;5;10" dur="2s" begin=".5s" repeatCount="indefinite"/><animate attributeName="opacity" values=".4;0;.4" dur="2s" begin=".5s" repeatCount="indefinite"/></circle>
+          <!-- Window lights -->
+          <rect x="15" y="30" width="5" height="5" fill="rgba(204,255,0,.15)" stroke="rgba(204,255,0,.3)" stroke-width=".7"/>
+          <rect x="23" y="30" width="5" height="5" fill="rgba(204,255,0,.15)" stroke="rgba(204,255,0,.3)" stroke-width=".7"/>
+          <rect x="31" y="30" width="5" height="5" fill="rgba(204,255,0,.15)" stroke="rgba(204,255,0,.3)" stroke-width=".7"/>
+        </svg>
+      </div>
+      <h4>Industrial</h4>
+      <p>Insumos y materia prima donde los necesitas, cuando los necesitas, sin parar tu l&iacute;nea.</p>
+    </div>
+    <div class="c-card rv">
+      <div class="c-icon-wrap">
+        <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
+          <!-- Import: ship on waves -->
+          <path d="M10,30 L14,22 L38,22 L42,30" stroke="#ccff00" stroke-width="1.3" fill="none"/>
+          <rect x="21" y="14" width="10" height="10" stroke="#ccff00" stroke-width="1" fill="none"/>
+          <line x1="26" y1="10" x2="26" y2="14" stroke="#ccff00" stroke-width="1.2"/>
+          <!-- Mast flag -->
+          <polygon points="26,10 32,12 26,14" stroke="rgba(204,255,0,.5)" stroke-width=".8" fill="rgba(204,255,0,.15)"/>
+          <!-- Animated waves -->
+          <path d="M6,34 Q10,31 14,34 Q18,37 22,34 Q26,31 30,34 Q34,37 38,34 Q42,31 46,34" stroke="rgba(204,255,0,.5)" stroke-width="1.2" fill="none">
+            <animate attributeName="d" values="M6,34 Q10,31 14,34 Q18,37 22,34 Q26,31 30,34 Q34,37 38,34 Q42,31 46,34;M6,34 Q10,37 14,34 Q18,31 22,34 Q26,37 30,34 Q34,31 38,34 Q42,37 46,34;M6,34 Q10,31 14,34 Q18,37 22,34 Q26,31 30,34 Q34,37 38,34 Q42,31 46,34" dur="2.5s" repeatCount="indefinite"/>
+          </path>
+          <path d="M6,38 Q10,35 14,38 Q18,41 22,38 Q26,35 30,38 Q34,41 38,38 Q42,35 46,38" stroke="rgba(204,255,0,.25)" stroke-width="1" fill="none">
+            <animate attributeName="d" values="M6,38 Q10,35 14,38 Q18,41 22,38 Q26,35 30,38 Q34,41 38,38 Q42,35 46,38;M6,38 Q10,41 14,38 Q18,35 22,38 Q26,41 30,38 Q34,35 38,38 Q42,41 46,38;M6,38 Q10,35 14,38 Q18,41 22,38 Q26,35 30,38 Q34,41 38,38 Q42,35 46,38" dur="2.5s" begin=".5s" repeatCount="indefinite"/>
+          </path>
+        </svg>
+      </div>
+      <h4>Importaci&oacute;n</h4>
+      <p>Coordinaci&oacute;n completa de importaciones: aduana, almac&eacute;n, distribuci&oacute;n. Sin escapes.</p>
+    </div>
+    <div class="c-card rv d1">
+      <div class="c-icon-wrap">
+        <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
+          <!-- Brands: signal broadcast -->
+          <circle cx="26" cy="26" r="5" fill="#ccff00"/>
+          <circle cx="26" cy="26" r="5" stroke="#ccff00" stroke-width="1" fill="none">
+            <animate attributeName="r" values="5;14" dur="2.2s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values=".7;0" dur="2.2s" repeatCount="indefinite"/>
+          </circle>
+          <circle cx="26" cy="26" r="5" stroke="#ccff00" stroke-width="1" fill="none">
+            <animate attributeName="r" values="5;14" dur="2.2s" begin=".7s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values=".7;0" dur="2.2s" begin=".7s" repeatCount="indefinite"/>
+          </circle>
+          <circle cx="26" cy="26" r="5" stroke="#ccff00" stroke-width="1" fill="none">
+            <animate attributeName="r" values="5;14" dur="2.2s" begin="1.4s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values=".7;0" dur="2.2s" begin="1.4s" repeatCount="indefinite"/>
+          </circle>
+        </svg>
+      </div>
+      <h4>Marcas</h4>
+      <p>Distribuci&oacute;n omnicanal integrada: canales propios, mayoristas y plataformas digitales.</p>
+    </div>
+    <div class="c-card rv d2">
+      <div class="c-icon-wrap">
+        <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
+          <!-- Air: plane on trajectory arc -->
+          <path d="M8,40 Q26,10 44,18" stroke="rgba(204,255,0,.2)" stroke-width="1.2" fill="none" stroke-dasharray="3 4"/>
+          <circle r="4" fill="#ccff00">
+            <animateMotion dur="3s" repeatCount="indefinite" path="M8,40 Q26,10 44,18"/>
+          </circle>
+          <!-- Wing lines on moving dot -->
+          <path d="M5,38 L11,36 L9,42 Z" fill="rgba(204,255,0,.35)">
+            <animateMotion dur="3s" repeatCount="indefinite" path="M8,40 Q26,10 44,18"/>
+          </path>
+          <!-- Radar arcs from destination -->
+          <path d="M36,12 Q42,8 46,16" stroke="rgba(204,255,0,.3)" stroke-width="1" fill="none"><animate attributeName="opacity" values=".3;.8;.3" dur="2s" repeatCount="indefinite"/></path>
+          <path d="M34,9 Q42,4 48,16" stroke="rgba(204,255,0,.15)" stroke-width="1" fill="none"><animate attributeName="opacity" values=".15;.5;.15" dur="2s" begin=".5s" repeatCount="indefinite"/></path>
+        </svg>
+      </div>
+      <h4>A&eacute;reo</h4>
+      <p>Carga a&eacute;rea coordinada de extremo a extremo: origen, handling, aduana, entrega final.</p>
+    </div>
+  </div>
+</section>
+
+<!-- MANIFESTO -->
+<div class="manifesto rv">
+  <blockquote>&ldquo;El cliente no compra log&iacute;stica.<br>Compra que las cosas pasen bien,<br>a tiempo y sin excusas.&rdquo;</blockquote>
+  <cite>&mdash; El principio Nexum</cite>
+</div>
+
+<!-- ══════════════ TEAM ══════════════ -->
+<section id="equipo">
+  <div class="team-head">
+    <div>
+      <div class="s-tag rv">El equipo</div>
+      <h2 class="disp rv d1">Los que hacen<br>que <span class="lime">pase.</span></h2>
+    </div>
+    <p style="font-size:.88rem;color:#555;max-width:280px;line-height:1.72;font-family:'DM Sans',sans-serif" class="rv d2">Detr&aacute;s de cada env&iacute;o hay expertos comprometidos con que tu operaci&oacute;n nunca falle.</p>
+  </div>
+  <div class="t-grid">
+    <div class="t-card rv">
+      <div class="t-av-wrap">
+        <!-- Animated avatar: person outline with orbit -->
+        <svg class="t-av-anim" viewBox="0 0 64 64" fill="none">
+          <circle cx="32" cy="32" r="30" stroke="rgba(204,255,0,.12)" stroke-width="1"/>
+          <circle cx="32" cy="22" r="9" stroke="#ccff00" stroke-width="1.2" fill="rgba(204,255,0,.06)"/>
+          <path d="M12,54 Q12,38 32,38 Q52,38 52,54" stroke="#ccff00" stroke-width="1.2" fill="none"/>
+          <circle cx="32" cy="32" r="30" stroke="rgba(204,255,0,.2)" stroke-width="1" fill="none">
+            <animate attributeName="r" values="30;34;30" dur="3s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values=".2;0;.2" dur="3s" repeatCount="indefinite"/>
+          </circle>
+        </svg>
+      </div>
+      <div class="t-name">Carlos Mendoza</div>
+      <div class="t-role">CEO &amp; Fundador</div>
+      <p>15 a&ntilde;os orquestando cadenas de suministro para las marcas m&aacute;s exigentes de Latinoam&eacute;rica.</p>
+    </div>
+    <div class="t-card rv d1">
+      <div class="t-av-wrap">
+        <svg class="t-av-anim" viewBox="0 0 64 64" fill="none">
+          <circle cx="32" cy="32" r="30" stroke="rgba(204,255,0,.12)" stroke-width="1"/>
+          <circle cx="32" cy="22" r="9" stroke="#ccff00" stroke-width="1.2" fill="rgba(204,255,0,.06)"/>
+          <path d="M12,54 Q12,38 32,38 Q52,38 52,54" stroke="#ccff00" stroke-width="1.2" fill="none"/>
+          <circle cx="32" cy="32" r="30" stroke="rgba(204,255,0,.2)" stroke-width="1" fill="none">
+            <animate attributeName="r" values="30;34;30" dur="3s" begin=".5s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values=".2;0;.2" dur="3s" begin=".5s" repeatCount="indefinite"/>
+          </circle>
+        </svg>
+      </div>
+      <div class="t-name">Andrea Torres</div>
+      <div class="t-role">Directora de Operaciones</div>
+      <p>Ex-directora de log&iacute;stica en una de las empresas m&aacute;s grandes del pa&iacute;s. Obsesionada con el detalle.</p>
+    </div>
+    <div class="t-card rv d2">
+      <div class="t-av-wrap">
+        <svg class="t-av-anim" viewBox="0 0 64 64" fill="none">
+          <circle cx="32" cy="32" r="30" stroke="rgba(204,255,0,.12)" stroke-width="1"/>
+          <circle cx="32" cy="22" r="9" stroke="#ccff00" stroke-width="1.2" fill="rgba(204,255,0,.06)"/>
+          <path d="M12,54 Q12,38 32,38 Q52,38 52,54" stroke="#ccff00" stroke-width="1.2" fill="none"/>
+          <circle cx="32" cy="32" r="30" stroke="rgba(204,255,0,.2)" stroke-width="1" fill="none">
+            <animate attributeName="r" values="30;34;30" dur="3s" begin="1s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values=".2;0;.2" dur="3s" begin="1s" repeatCount="indefinite"/>
+          </circle>
+        </svg>
+      </div>
+      <div class="t-name">Luis Ram&iacute;rez</div>
+      <div class="t-role">Head de Tecnolog&iacute;a</div>
+      <p>Arquitecto del sistema de visibilidad en tiempo real que hace posible el control de Nexum.</p>
+    </div>
+    <div class="t-card rv d3">
+      <div class="t-av-wrap">
+        <svg class="t-av-anim" viewBox="0 0 64 64" fill="none">
+          <circle cx="32" cy="32" r="30" stroke="rgba(204,255,0,.12)" stroke-width="1"/>
+          <circle cx="32" cy="22" r="9" stroke="#ccff00" stroke-width="1.2" fill="rgba(204,255,0,.06)"/>
+          <path d="M12,54 Q12,38 32,38 Q52,38 52,54" stroke="#ccff00" stroke-width="1.2" fill="none"/>
+          <circle cx="32" cy="32" r="30" stroke="rgba(204,255,0,.2)" stroke-width="1" fill="none">
+            <animate attributeName="r" values="30;34;30" dur="3s" begin="1.5s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values=".2;0;.2" dur="3s" begin="1.5s" repeatCount="indefinite"/>
+          </circle>
+        </svg>
+      </div>
+      <div class="t-name">Sof&iacute;a Vargas</div>
+      <div class="t-role">Directora Comercial</div>
+      <p>Especialista en transformar el dolor log&iacute;stico de los clientes en soluciones medibles y rentables.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ CTA ══════════════ -->
+<section id="contacto">
+  <div class="cta-l">
+    <div class="s-tag rv">El destino</div>
+    <h2 class="rv d1">&iquest;Listo para<br>que todo<br><span>funcione?</span></h2>
+    <p class="rv d2">Agenda una llamada con nuestro equipo. Sin pitch, sin presi&oacute;n &mdash; solo una conversaci&oacute;n honesta sobre tu operaci&oacute;n log&iacute;stica.</p>
+    <div class="cta-btns rv d3">
+      <a class="btn-lime" href="#">Comienza el viaje</a>
+      <a class="btn-ghost" href="#">Ver demo &rarr;</a>
+    </div>
+  </div>
+  <div class="cform rv d2">
+    <div class="form-row">
+      <input type="text" placeholder="Tu nombre"/>
+      <input type="text" placeholder="Empresa"/>
+    </div>
+    <input type="email" placeholder="Correo electr&oacute;nico"/>
+    <input type="text" placeholder="&iquest;Cu&aacute;l es tu reto log&iacute;stico principal?"/>
+    <button class="f-btn">Comenzar &rarr;</button>
+    <p class="f-note">Respuesta en menos de 24 horas &middot; Diagn&oacute;stico inicial sin costo</p>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="f-logo"><span class="f-dot"></span>Nexum Logistics</div>
+  <div class="f-links">
+    <a href="#problem">El Problema</a>
+    <a href="#nexum-scroll">Nexum</a>
+    <a href="#como">Proceso</a>
+    <a href="#beneficios">Beneficios</a>
+    <a href="#clientes">Sectores</a>
+    <a href="#contacto">Contacto</a>
+  </div>
+  <div class="f-badge"><strong>Concepto &middot; Prototipo Adaptable</strong><br>Identidad y contenido son un punto de partida.</div>
+</footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+
+  /* ── CURSOR ── */
+  var cur = document.getElementById('cursor');
+  var ring = document.getElementById('cursor-ring');
+  var mx = 0, my = 0, rx = 0, ry = 0;
+  document.addEventListener('mousemove', function(e){ mx = e.clientX; my = e.clientY; });
+  (function animCursor(){
+    if(cur){ cur.style.left = mx+'px'; cur.style.top = my+'px'; }
+    if(ring){
+      rx += (mx - rx) * 0.1;
+      ry += (my - ry) * 0.1;
+      ring.style.left = rx+'px'; ring.style.top = ry+'px';
+    }
+    requestAnimationFrame(animCursor);
+  })();
+
+  /* ── WORD SPLIT ── */
+  document.querySelectorAll('.wr').forEach(function(el){
+    var nodes = Array.from(el.childNodes);
+    var out = '';
+    nodes.forEach(function(n){
+      if(n.nodeType===3){
+        n.textContent.trim().split(/\s+/).filter(Boolean).forEach(function(w){
+          out += '<span class="wd">'+w+'</span> ';
+        });
+      } else if(n.nodeType===1){ out += n.outerHTML; }
+    });
+    el.innerHTML = out;
+  });
+
+  /* ── PARTICLES ── */
+  function makeParticles(id, count, sizeRange, opacity){
+    var layer = document.getElementById(id);
+    if(!layer) return;
+    for(var i=0;i<count;i++){
+      var d = document.createElement('div');
+      d.className = 'particle';
+      var s = sizeRange[0] + Math.random()*(sizeRange[1]-sizeRange[0]);
+      d.style.cssText = 'width:'+s+'px;height:'+s+'px;left:'+(Math.random()*100)+'%;top:'+(Math.random()*100)+'%;opacity:'+opacity+';';
+      layer.appendChild(d);
+    }
+  }
+  makeParticles('pl1', 28, [1,2], 0.5);
+  makeParticles('pl2', 18, [2,4], 0.35);
+  makeParticles('pl3', 10, [3,6], 0.2);
+
+  /* ── PARALLAX ── */
+  var heroGrid  = document.getElementById('heroGrid');
+  var truckLayer= document.getElementById('truckLayer');
+  var pl1       = document.getElementById('pl1');
+  var pl2       = document.getElementById('pl2');
+  var pl3       = document.getElementById('pl3');
+  var orbitGrid = document.getElementById('orbitGrid');
+  var orbitCont = document.getElementById('orbitContainer');
+  var ring1el   = document.getElementById('ring1');
+  var ring2el   = document.getElementById('ring2');
+  var ticking   = false;
+
+  function runParallax(){
+    var y = window.scrollY;
+    if(pl1)  pl1.style.transform  = 'translateY('+(y*0.06)+'px)';
+    if(pl2)  pl2.style.transform  = 'translateY('+(y*0.12)+'px)';
+    if(pl3)  pl3.style.transform  = 'translateY('+(y*0.2)+'px)';
+    if(truckLayer) truckLayer.style.transform = 'translateY('+(y*0.18)+'px)';
+
+    // Orbit section parallax
+    var ns = document.getElementById('nexum-scroll');
+    if(ns && orbitCont){
+      var nsTop = ns.offsetTop;
+      var nsH   = ns.offsetHeight;
+      var rel   = y - nsTop;
+      if(rel > -window.innerHeight && rel < nsH){
+        var depth = rel * 0.06;
+        if(orbitGrid) orbitGrid.style.transform = 'translateY('+(rel*0.04)+'px)';
+        if(ring1el)   ring1el.style.transform   = 'translate(-50%,-50%) translateY('+(rel*0.08)+'px) rotate('+(rel*0.03)+'deg)';
+        if(ring2el)   ring2el.style.transform   = 'translate(-50%,-50%) translateY('+(rel*0.04)+'px) rotate('+(-rel*0.02)+'deg)';
+      }
+    }
+    ticking = false;
+  }
+  window.addEventListener('scroll', function(){
+    if(!ticking){ requestAnimationFrame(runParallax); ticking = true; }
+  });
+
+  /* ── ORBIT NODES SETUP ── */
+  // Node id => angle (degrees from top, clockwise), radius (% of container /2)
+  var nodeAngles = {
+    'node-ecomm':    { angle: 270, r: 38 }, // top
+    'node-retail':   { angle: 330, r: 38 }, // top-right
+    'node-import':   { angle: 30,  r: 38 }, // bottom-right
+    'node-marcas':   { angle: 90,  r: 38 }, // bottom
+    'node-industria':{ angle: 150, r: 38 }, // bottom-left
+    'node-aereo':    { angle: 210, r: 38 }, // top-left
+  };
+
+  function positionNodes(){
+    var cont = document.getElementById('orbitContainer');
+    if(!cont) return;
+    var size = cont.offsetWidth;
+    Object.keys(nodeAngles).forEach(function(id){
+      var node = document.getElementById(id);
+      if(!node) return;
+      var cfg = nodeAngles[id];
+      var rad = (cfg.angle - 90) * Math.PI / 180;
+      var cx = 50 + Math.cos(rad) * cfg.r;
+      var cy = 50 + Math.sin(rad) * cfg.r;
+      node.style.left = cx + '%';
+      node.style.top  = cy + '%';
+    });
+  }
+  positionNodes();
+  window.addEventListener('resize', positionNodes);
+
+  /* ── CONNECTOR LINES ── */
+  function drawConnectors(){
+    var svg = document.getElementById('connectorSvg');
+    if(!svg) return;
+    svg.innerHTML = '';
+    var cont = document.getElementById('orbitContainer');
+    if(!cont) return;
+    var size = cont.offsetWidth;
+    var cx = size/2, cy = size/2;
+
+    Object.keys(nodeAngles).forEach(function(id){
+      var node = document.getElementById(id);
+      if(!node || !node.classList.contains('active')) return;
+      var cfg = nodeAngles[id];
+      var rad = (cfg.angle - 90) * Math.PI / 180;
+      var nx = size * (0.5 + Math.cos(rad) * cfg.r/100);
+      var ny = size * (0.5 + Math.sin(rad) * cfg.r/100);
+      var line = document.createElementNS('http://www.w3.org/2000/svg','line');
+      line.setAttribute('x1', cx);
+      line.setAttribute('y1', cy);
+      line.setAttribute('x2', nx);
+      line.setAttribute('y2', ny);
+      line.setAttribute('stroke','rgba(204,255,0,0.25)');
+      line.setAttribute('stroke-width','1');
+      line.setAttribute('stroke-dasharray','4 4');
+      var anim = document.createElementNS('http://www.w3.org/2000/svg','animate');
+      anim.setAttribute('attributeName','stroke-dashoffset');
+      anim.setAttribute('values','0;-16');
+      anim.setAttribute('dur','1.5s');
+      anim.setAttribute('repeatCount','indefinite');
+      line.appendChild(anim);
+      svg.appendChild(line);
+    });
+  }
+
+  /* ── SCROLLYTELLING ── */
+  var scrollSection = document.getElementById('nexum-scroll');
+  var panels = [
+    document.getElementById('panel-0'),
+    document.getElementById('panel-1'),
+    document.getElementById('panel-2'),
+    document.getElementById('panel-3')
+  ];
+  var nodeOrder = ['node-ecomm','node-retail','node-import','node-marcas','node-industria','node-aereo'];
+  var lastPanel = -1;
+
+  // Show panel 0 initially
+  if(panels[0]) panels[0].classList.add('visible');
+
+  function updateScrollytelling(){
+    if(!scrollSection) return;
+    var secTop = scrollSection.offsetTop;
+    var secH   = scrollSection.offsetHeight;
+    var winH   = window.innerHeight;
+    var y      = window.scrollY;
+    var progress = Math.max(0, Math.min(1, (y - secTop) / (secH - winH)));
+
+    // Which panel to show (4 panels)
+    var panelIdx = Math.min(panels.length-1, Math.floor(progress * panels.length));
+    if(panelIdx !== lastPanel){
+      panels.forEach(function(p){ if(p) p.classList.remove('visible'); });
+      if(panels[panelIdx]) panels[panelIdx].classList.add('visible');
+      lastPanel = panelIdx;
+    }
+
+    // Activate nodes progressively
+    var nodesActive = Math.floor(progress * (nodeOrder.length + 1));
+    nodeOrder.forEach(function(id, i){
+      var node = document.getElementById(id);
+      if(!node) return;
+      var shouldBeActive = i < nodesActive;
+      var wasActive = node.classList.contains('active');
+      if(shouldBeActive !== wasActive){
+        if(shouldBeActive) node.classList.add('active');
+        else node.classList.remove('active');
+        drawConnectors();
+      }
+    });
+  }
+
+  window.addEventListener('scroll', updateScrollytelling);
+  updateScrollytelling();
+  window.addEventListener('scroll', updateJourneyTruck);
+
+  /* ── JOURNEY STEPS (vertical) ── */
+  var jSteps = document.querySelectorAll('.j-step');
+  var jTruck = document.getElementById('journeyTruck');
+  var roadTraveled = document.getElementById('roadTraveled');
+  var comoSection = document.getElementById('como');
+
+  function updateJourneyTruck() {
+    if (!jTruck || !comoSection) return;
+    var lastActive = null;
+    jSteps.forEach(function(s) { if (s.classList.contains('on')) lastActive = s; });
+    if (!lastActive) return;
+
+    // Track the numbered circle (.j-step-num) not the mid wrapper
+    var numCircle = lastActive.querySelector('.j-step-num');
+    if (!numCircle) return;
+
+    var comoRect  = comoSection.getBoundingClientRect();
+    var circRect  = numCircle.getBoundingClientRect();
+
+    // Center of the circle relative to #como top
+    var relY = (circRect.top + circRect.height / 2) - comoRect.top;
+
+    jTruck.style.top = relY + 'px';
+    jTruck.classList.add('visible');
+
+    // Road traveled: from section top to circle center minus a little clearance
+    if (roadTraveled) roadTraveled.style.height = Math.max(0, relY - circRect.height) + 'px';
+  }
+
+  var jIo = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if (e.isIntersecting) {
+        e.target.classList.add('on');
+        // Small delay so layout settles before measuring
+        setTimeout(updateJourneyTruck, 80);
+      }
+    });
+  }, { threshold: 0.4 });
+  jSteps.forEach(function(s){ jIo.observe(s); });
+
+  /* ── GENERAL REVEALS ── */
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting){ e.target.classList.add('on'); io.unobserve(e.target); }
+    });
+  }, { threshold: 0.08, rootMargin: '0px 0px -20px 0px' });
+  document.querySelectorAll('.rv,.wr,.stat').forEach(function(el){ io.observe(el); });
+
+  /* ── JOURNEY NAV DOTS ── */
+  var sections = ['hero','problem','nexum-scroll','como','beneficios','contacto'];
+  var jDots = document.querySelectorAll('.j-dot');
+  function updateJourneyDots(){
+    var y = window.scrollY + window.innerHeight * 0.4;
+    var active = 0;
+    sections.forEach(function(id, i){
+      var sec = document.getElementById(id);
+      if(sec && sec.offsetTop <= y) active = i;
+    });
+    jDots.forEach(function(d, i){ d.classList.toggle('active', i===active); });
+  }
+  window.addEventListener('scroll', updateJourneyDots);
+  jDots.forEach(function(d, i){
+    d.addEventListener('click', function(){
+      var sec = document.getElementById(sections[i]);
+      if(sec) sec.scrollIntoView({behavior:'smooth'});
+    });
+  });
+
+  /* ── SMOOTH SCROLL ── */
+  document.querySelectorAll('a[href^="#"]').forEach(function(a){
+    a.addEventListener('click', function(e){
+      var id = a.getAttribute('href');
+      if(id==='#') return;
+      var t = document.querySelector(id);
+      if(!t) return;
+      e.preventDefault();
+      t.scrollIntoView({behavior:'smooth',block:'start'});
+    });
+  });
+
+  /* ── MOUSE PARALLAX TRUCK ── */
+  document.addEventListener('mousemove', function(e){
+    var tl = document.querySelector('.truck-layer');
+    if(tl) tl.style.transform = 'translateY('+window.scrollY*0.18+'px) translateX('+((e.clientX/window.innerWidth-.5)*8)+'px)';
+  });
+
+});
+</script>
+</body>
+</html>
